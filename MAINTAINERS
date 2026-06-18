@@ -1,0 +1,105 @@
+# MAINTAINERS
+#
+# This file maps monorepo sections to their owning teams and individuals.
+# Format used by Phoenix Security monorepo import to split sections into
+# separate workspace repo rows for independent scanning and policy application.
+#
+# Format:
+#   [section]
+#   path      = <relative path from repo root>
+#   team      = <team slug>
+#   lead      = <github username>
+#   email     = <team contact email>
+#   language  = <primary language>
+#   tier      = <criticality: critical | high | medium | low>
+#   scan_policy = <phoenix policy id or name>
+
+[api]
+path        = api/
+team        = platform-backend
+lead        = alice-chen
+email       = platform-backend@demo.example.com
+language    = go
+tier        = critical
+scan_policy = default-critical
+
+[frontend]
+path        = frontend/
+team        = web-frontend
+lead        = bob-martinez
+email       = web-frontend@demo.example.com
+language    = javascript
+tier        = high
+scan_policy = default-high
+
+[landing]
+path        = landing/
+team        = web-frontend
+lead        = bob-martinez
+email       = web-frontend@demo.example.com
+language    = html
+tier        = medium
+scan_policy = default-medium
+
+[webhook]
+path        = webhook/
+team        = integrations
+lead        = carol-patel
+email       = integrations@demo.example.com
+language    = go
+tier        = high
+scan_policy = default-high
+
+[worker]
+path        = worker/
+team        = platform-backend
+lead        = alice-chen
+email       = platform-backend@demo.example.com
+language    = go
+tier        = high
+scan_policy = default-high
+
+[services/java-api]
+path        = services/java-api/
+team        = java-platform
+lead        = david-kim
+email       = java-platform@demo.example.com
+language    = java
+tier        = critical
+scan_policy = default-critical
+
+[services/python-worker]
+path        = services/python-worker/
+team        = data-engineering
+lead        = eva-rossi
+email       = data-engineering@demo.example.com
+language    = python
+tier        = high
+scan_policy = default-high
+
+[infrastructure/terraform]
+path        = infrastructure/terraform/
+team        = platform-sre
+lead        = frank-osei
+email       = platform-sre@demo.example.com
+language    = terraform
+tier        = critical
+scan_policy = iac-critical
+
+[infrastructure/k8s]
+path        = infrastructure/k8s/
+team        = platform-sre
+lead        = frank-osei
+email       = platform-sre@demo.example.com
+language    = kubernetes
+tier        = critical
+scan_policy = iac-critical
+
+[shared]
+path        = shared/
+team        = platform-backend
+lead        = alice-chen
+email       = platform-backend@demo.example.com
+language    = javascript
+tier        = critical
+scan_policy = default-critical
