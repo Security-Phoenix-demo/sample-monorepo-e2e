@@ -1,1 +1,59 @@
-Welcome!
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Demo App</title>
+    <!-- Vulnerable jQuery: CVE-2015-9251 (XSS via $.ajax) — 1.11.1 -->
+    <script src="https://code.jquery.com/jquery-1.11.1.min.js"></script>
+    <!-- Vulnerable Angular: CVE-2019-14863 (prototype pollution) — 1.5.0 -->
+    <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.5.0/angular.min.js"></script>
+</head>
+<body>
+    <h1>Welcome to Demo App</h1>
+
+    <div id="search">
+        <input id="searchBox" type="text" placeholder="Search...">
+        <button onclick="search()">Search</button>
+        <div id="results"></div>
+    </div>
+
+    <div id="profile"></div>
+
+    <script>
+        // DOM-based XSS: writes location.hash directly into innerHTML
+        function loadProfile() {
+            var hash = location.hash.substring(1);
+            // VULNERABLE: attacker sets hash to <img src=x onerror=alert(1)>
+            document.getElementById('profile').innerHTML = decodeURIComponent(hash);
+        }
+
+        function search() {
+            var query = document.getElementById('searchBox').value;
+            // VULNERABLE: $.ajax with eval-able response
+            $.ajax({
+                url: '/api/search?q=' + query,
+                success: function(data) {
+                    // VULNERABLE: raw HTML injection
+                    $('#results').html(data);
+                }
+            });
+        }
+
+        // Prototype pollution via jQuery extend (CVE-2019-11358)
+        function mergeSettings(userSettings) {
+            var defaults = { theme: 'light', lang: 'en' };
+            // VULNERABLE: deep extend allows __proto__ pollution
+            $.extend(true, defaults, userSettings);
+            return defaults;
+        }
+
+        // postMessage handler without origin check — XSS vector
+        window.addEventListener('message', function(e) {
+            // VULNERABLE: no e.origin check
+            document.getElementById('results').innerHTML = e.data;
+        });
+
+        window.onload = loadProfile;
+    </script>
+</body>
+</html>

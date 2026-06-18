@@ -1,0 +1,147 @@
+---
+# Vulnerable Kubernetes configuration — DO NOT USE IN PRODUCTION
+# Vulnerabilities: privileged containers, hostNetwork, no resource limits,
+# hardcoded secrets, root user, writable root filesystem
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: api
+  template:
+    metadata:
+      labels:
+        app: api
+    spec:
+      # Access to all host namespaces — container escape risk
+      hostNetwork: true
+      hostPID: true
+      hostIPC: true
+
+      containers:
+      - name: api
+        image: sample-monorepo/api:latest
+        ports:
+        - containerPort: 8080
+
+        # No resource limits — denial of service risk
+        # resources: {}
+
+        securityContext:
+          # Privileged container — full host access
+          privileged: true
+          # Running as root
+          runAsUser: 0
+          runAsGroup: 0
+          # Writable root filesystem
+          readOnlyRootFilesystem: false
+          allowPrivilegeEscalation: true
+          capabilities:
+            add:
+            - ALL
+
+        env:
+        # Hardcoded secrets in env vars (should use Secrets)
+        - name: DB_PASSWORD
+          value: "password123"
+        - name: API_KEY
+          value: "sk-prod-a1b2c3d4e5f6g7h8"
+        - name: AWS_ACCESS_KEY_ID
+          value: "AKIAIOSFODNN7EXAMPLE"
+        - name: AWS_SECRET_ACCESS_KEY
+          value: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+
+        volumeMounts:
+        # Mounting Docker socket — allows container escape
+        - name: docker-socket
+          mountPath: /var/run/docker.sock
+        # Mounting host /etc — read access to host secrets
+        - name: host-etc
+          mountPath: /host-etc
+          readOnly: true
+
+      volumes:
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
+      - name: host-etc
+        hostPath:
+          path: /etc
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: java-api-deployment
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: java-api
+  template:
+    metadata:
+      labels:
+        app: java-api
+    spec:
+      containers:
+      - name: java-api
+        image: sample-monorepo/java-api:latest
+        ports:
+        - containerPort: 8081
+        securityContext:
+          privileged: false
+          runAsUser: 0
+          allowPrivilegeEscalation: true
+        env:
+        - name: SPRING_DATASOURCE_PASSWORD
+          value: "password123"
+
+---
+# Service with NodePort — exposes ports on every node
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-service
+spec:
+  type: NodePort
+  selector:
+    app: api
+  ports:
+  - port: 8080
+    targetPort: 8080
+    nodePort: 30080
+
+---
+# Network Policy: none — allows unrestricted pod-to-pod communication
+# (Intentionally absent)
+
+---
+# RBAC: ClusterRole with wildcard permissions
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: overly-permissive-role
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: overly-permissive-binding
+subjects:
+- kind: ServiceAccount
+  name: default
+  namespace: default
+roleRef:
+  kind: ClusterRole
+  name: overly-permissive-role
+  apiGroup: rbac.authorization.k8s.io

@@ -1,4 +1,4 @@
-module github.com/Security-Phoenix-demo/sample-monorepo/api
+module github.com/Security-Phoenix-demo/sample-monorepo/worker
 
 go 1.21
 

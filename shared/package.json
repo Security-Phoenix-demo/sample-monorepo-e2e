@@ -1,0 +1,12 @@
+{
+  "name": "shared-lib",
+  "version": "1.0.0",
+  "description": "Shared utilities — intentionally vulnerable",
+  "main": "lib/index.js",
+  "dependencies": {
+    "pg": "7.4.0",
+    "jsonwebtoken": "8.1.0",
+    "bcrypt": "1.0.2",
+    "node-forge": "0.6.33"
+  }
+}

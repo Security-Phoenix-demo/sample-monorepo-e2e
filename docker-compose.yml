@@ -1,0 +1,82 @@
+version: "3.8"
+
+services:
+  # Go API — command injection, path traversal, SSRF, XSS
+  api:
+    build: ./api
+    ports:
+      - "8080:8080"
+    environment:
+      - DB_HOST=postgres
+      - DB_PASSWORD=password123
+    # No resource limits — DoS risk
+    # No healthcheck
+    user: root
+
+  # Node.js frontend — prototype pollution, SSTI, RCE via node-serialize
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=development
+      - SESSION_SECRET=dev_session_secret_abc
+    user: root
+
+  # Go webhook — hardcoded secret, command injection
+  webhook:
+    build: ./webhook
+    ports:
+      - "8081:8080"
+    user: root
+
+  # Go worker — task command injection, path traversal
+  worker:
+    build: ./worker
+    ports:
+      - "8082:8082"
+    user: root
+
+  # Python Flask — pickle RCE, SSTI, SQLi, yaml.load RCE
+  python-worker:
+    build: ./services/python-worker
+    ports:
+      - "5000:5000"
+    environment:
+      # Hardcoded credentials in environment
+      - AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE
+      - AWS_SECRET_ACCESS_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+      - SECRET_KEY=hardcoded_flask_secret_key_abc123
+    user: root
+
+  # Java Spring Boot — Log4Shell, Spring4Shell, Text4Shell, Java deserialization RCE
+  java-api:
+    build: ./services/java-api
+    ports:
+      - "8083:8081"
+    environment:
+      - SPRING_DATASOURCE_PASSWORD=password123
+    user: root
+
+  # PostgreSQL — default credentials, no TLS, accessible from all services
+  postgres:
+    image: postgres:12
+    ports:
+      - "5432:5432"  # Exposed on host — misconfiguration
+    environment:
+      POSTGRES_DB: appdb
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: password123
+    # No volume encryption
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  # Redis without authentication
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379"  # No auth, exposed on host
+    command: redis-server --protected-mode no
+
+volumes:
+  pgdata:
